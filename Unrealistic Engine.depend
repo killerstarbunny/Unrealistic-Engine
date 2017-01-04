@@ -1,0 +1,13 @@
+# depslib dependency file v1.0
+1483499759 source:c:\users\admin\documents\c++\unrealistic engine\main.cpp
+	<iostream>
+	<stdlib.h>
+	<string>
+	<windows.h>
+	<fstream>
+	<math.h>
+	<conio.h>
+	<sstream>
+	<vector>
+	<ostream>
+

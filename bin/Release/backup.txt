@@ -1,0 +1,161 @@
+#include <iostream>
+#include <string>
+#include <windows.h>
+#include <fstream>
+#include <math.h>
+
+using namespace std;
+
+#define pi 3.14159265
+#define maxAngle 180
+
+void ShowConsoleCursor(bool showFlag) //No idea what this does, i just need it to hide the cursor for me
+{
+    HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    CONSOLE_CURSOR_INFO     cursorInfo;
+
+    GetConsoleCursorInfo(out, &cursorInfo);
+    cursorInfo.bVisible = showFlag; // set the cursor visibility
+    SetConsoleCursorInfo(out, &cursorInfo);
+}
+
+
+int main()
+{
+    char world[12][80];
+    string fileLoc;
+    cout << "World loc: ";
+    cin >> fileLoc;
+    ifstream layout(fileLoc.c_str());
+    if(!layout)
+    {
+        cout<<fileLoc;
+        cout<<"File doesn't exist!"<<endl;
+        return 5;
+    }
+    string currentLine;
+    size_t tempT;
+    int l,w;
+    getline(layout, currentLine);
+    tempT=currentLine.find("x");
+    w=stoi(currentLine.substr(0,tempT));
+    l=stoi(currentLine.substr(tempT+1,currentLine.size()));
+    cout <<"w: "<<w<<" l:  "<<l<<endl;
+    char **blockPos = new char*[w];
+    for (int i = 0; i < w; i++)
+    {
+        blockPos[i] = new char[l];
+    }
+    int y=0;
+    cout<<"World layout:"<<endl;//0=floor, 1=wall, 2=spawn
+    int playerx,playery;
+    while(getline(layout, currentLine))
+    {
+        for(int x=0;x<currentLine.size();x++)
+        {
+            blockPos[x][y]=currentLine[x];
+            if(blockPos[x][y]=='2')
+            {
+                playerx=x;
+                playery=y;
+                cout<<"Found Player"<<endl;
+            }
+        }
+        y++;
+    }
+    for(int q=0;q<w;q++)
+    {
+        for(int w=0;w<l;w++)
+        {
+            cout<<blockPos[q][w];
+        }
+        cout<<endl;
+    }
+    int direction=1;//1=north, 2=east, 3=south, 4=west;
+    if(direction==1)//start on north side
+    {
+        for(int y=0;y<l;y++)
+        {
+            int recheckX=-1;
+            for(int x=0;x<w;x++)
+            {
+                if(blockPos[x][y]=='1')
+                {
+                    if(x==playerx||y==playery)//check if only two edges should be checked because of the rendering method this has to be done
+                    {
+                        recheckX=x;//might have to swap rendering method, currently it just proceeds right which may cause extra lines to appear. The best method might be to go right then turn around and come from the right and go left
+                    }
+                    else //checks if three need to be checked
+                    {
+                        //find the three needed edges
+                        float distances[4];
+                        float locations[3][2];
+                        distances[0]=(float)sqrt((((x-.5)-playerx)*((x-.5)-playerx))*(((y+.5)-playery)*((y+.5)-playery)));//top left corner
+                        distances[1]=(float)sqrt((((x+.5)-playerx)*((x+.5)-playerx))*(((y+.5)-playery)*((y+.5)-playery)));//top right
+                        distances[2]=(float)sqrt((((x-.5)-playerx)*((x-.5)-playerx))*(((y-.5)-playery)*((y-.5)-playery)));//bottom left
+                        distances[3]=(float)sqrt((((x+.5)-playerx)*((x+.5)-playerx))*(((y-.5)-playery)*((y-.5)-playery)));//bottom right
+                        int excludedValue;
+                        float currentMax=0;
+                        for(int temp=0;temp<4;temp++)//standard find-the-biggest-thing
+                        {
+                            if(currentMax<distances[temp])
+                            {
+                                currentMax=distances[temp];
+                                excludedValue=temp;//if the biggest thing found it found it's the farthest one and the one that shouldn't be rendered
+                            }
+                        }
+                        bool foundExcluded=false;
+                        for(int temp=0;temp<4;temp++)
+                        {
+                            if(temp!=excludedValue)
+                            {
+                                if(foundExcluded==true)
+                                {
+                                    locations[temp-1][0]=x+(.5*cos((pi*temp*-1)));//stupid cos thing is used because it will go 1,-1,1,-1 which is the way that distances are messed with
+                                    int tempSign=1;
+                                    if(temp>1)
+                                    {
+                                        tempSign*=-1;
+                                    }
+                                    locations[temp-1][1]=y+(.5*tempSign);
+                                }
+                                else
+                                {
+                                    locations[temp][0]=x+(.5*sin((pi*(1+((temp-1)*2)))/2));
+                                    int tempSign=1;
+                                    if(temp>1)
+                                    {
+                                        tempSign*=-1;
+                                    }
+                                    locations[temp][1]=y+(.5*tempSign);
+                                }
+                            }
+                            else
+                            {
+                                foundExcluded=true;
+                            }
+                        }
+                        for(int temp1=0;temp1<3;temp1++)
+                        {
+                            cout<<"Pos "<<temp1+1<<": ";
+                            for(int temp2=0;temp2<2;temp2++)
+                            {
+                                cout<<locations[temp1][temp2]<<" ";
+                            }
+                            cout<<endl;
+                        }
+                        system("pause");
+                    }
+                }
+            }
+            if(recheckX!=-1)//
+            if(playery==y)
+            {
+                break;
+            }
+        }
+    }
+    ShowConsoleCursor(false);
+    return 0;
+}
